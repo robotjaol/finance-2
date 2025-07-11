@@ -1,36 +1,90 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import { Button } from '@/components/ui/button.jsx'
-import './App.css'
+import React, { useEffect } from 'react';
+import { useAuthStore } from '@/stores/authStore';
+import { useTransactionStore } from '@/stores/transactionStore';
+import LoginForm from '@/components/Auth/LoginForm';
+import DashboardLayout from '@/components/Layout/DashboardLayout';
+import OverviewTab from '@/components/Dashboard/OverviewTab';
+import TransactionsTab from '@/components/Dashboard/TransactionsTab';
+import BudgetingTab from '@/components/Dashboard/BudgetingTab';
+import ReportsTab from '@/components/Dashboard/ReportsTab';
+import GoalsTab from '@/components/Dashboard/GoalsTab';
+import ManagementTab from '@/components/Dashboard/ManagementTab';
+import ExportTab from '@/components/Dashboard/ExportTab';
+import SettingsTab from '@/components/Dashboard/SettingsTab';
+import SimulationTab from '@/components/Dashboard/SimulationTab';
+import VisualizerTab from '@/components/Dashboard/VisualizerTab';
+import QuickActions from '@/components/Dashboard/QuickActions';
+import { Toaster } from '@/components/ui/sonner';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const { isAuthenticated, isLoading, initialize } = useAuthStore();
+  const { initialize: initializeTransactions } = useTransactionStore();
+
+  useEffect(() => {
+    const initApp = async () => {
+      await initialize();
+      if (isAuthenticated) {
+        await initializeTransactions();
+      }
+    };
+    
+    initApp();
+  }, [initialize, initializeTransactions, isAuthenticated]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto">
+            <span className="text-white font-bold text-xl">R</span>
+          </div>
+          <div className="animate-pulse">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              robotjaol | Finance
+            </h1>
+            <p className="text-sm text-muted-foreground">Loading your financial dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <>
+        <LoginForm />
+        <Toaster />
+      </>
+    );
+  }
+
+  const dashboardContent = {
+    overview: (
+      <div className="space-y-6">
+        <QuickActions />
+        <OverviewTab />
+      </div>
+    ),
+    transactions: <TransactionsTab />,
+    budgeting: <BudgetingTab />,
+    reports: <ReportsTab />,
+    goals: <GoalsTab />,
+    management: <ManagementTab />,
+    export: <ExportTab />,
+    settings: <SettingsTab />,
+    simulation: <SimulationTab />,
+    visualizer: <VisualizerTab />
+  };
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div>
-        <Button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </Button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <DashboardLayout>
+        {dashboardContent}
+      </DashboardLayout>
+      <Toaster />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
